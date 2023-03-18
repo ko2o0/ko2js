@@ -2,12 +2,12 @@
 <html lang="ja">
     <meta charset="utf-8">
     <head>
-        <!--
         <link href="./ko2lib.css" rel="stylesheet">
         <script src="./ko2lib.js"></script>
-        -->
+        <!--
         <link href="https://ko2o0.github.io/ko2js/ko2lib.css" rel="stylesheet">
         <script src="https://ko2o0.github.io/ko2js/ko2lib.js"></script>
+        -->
         <script>
             window.onload = function() {
                 ko2js.page.reformat();
@@ -20,6 +20,16 @@
 
         <!-- -->
         <h1>Code</h1>
+        <h2>text</h2>
+        <pre>
+            #include &lt;stdio.h&gt;
+
+            int main(int argc, char** argv) {
+                printf("Hello, World.\n");
+                return 0;
+            }
+        </pre>
+        <h2>output</h2>
         <script type="text/plane" class="codeview">
             #include <stdio.h>
 
@@ -30,12 +40,45 @@
         </script>
 
         <!-- -->
-        <h1>Sequence</h1>
+        <h1>Sequence1</h1>
+        <h2>text</h2>
+        <pre>
+            A ->> B : a0001
+            B --> C : b0001
+            B <.. C : c0001
+            A <.. D : a0002
+        </pre>
+        <h2>output</h2>
         <script type="text/plane" class="sequence">
             A ->> B : a0001
             B --> C : b0001
             B <.. C : c0001
-            A ->> D : a0002
+            A <.. D : a0002
+        </script>
+
+        <!-- -->
+        <h2>Sequence2</h2>
+        <h2>text</h2>
+        <pre>
+            &lt;div id="seq2"&gt;&lt;/div&gt;
+            &lt;script type="text/javascript"&gt;
+                ko2js.diagram.sequence.view("seq2", [
+                    { src: "A", des: "B", atype: "->>", message: "a0001" },
+                    { src: "B", des: "C", atype: "-->", message: "b0001" },
+                    { src: "C", des: "B", atype: "..>", message: "c0001" },
+                    { src: "D", des: "A", atype: "..>", message: "a0002" },
+                ]);
+            &lt;/script&gt;
+        </pre>
+        <h2>output</h2>
+        <div id="seq2"></div>
+        <script type="text/javascript">
+            ko2js.diagram.sequence.view("seq2", [
+                { src: "A", des: "B", atype: "->>", message: "a0001" },
+                { src: "B", des: "C", atype: "-->", message: "b0001" },
+                { src: "C", des: "B", atype: "..>", message: "c0001" },
+                { src: "D", des: "A", atype: "..>", message: "a0002" },
+            ]);
         </script>
 
     </body>

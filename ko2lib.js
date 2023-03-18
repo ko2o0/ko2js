@@ -80,6 +80,10 @@ ko2js.classes.RenderSVG = class extends ko2js.classes.Render {
     }
 
     get_value(spec, name, defvalue) {
+        if (typeof(spec) == "undefined") {
+            return defvalue;
+        }
+
         if (typeof(spec[name]) != "undefined") {
             return spec[name];
         } else {
@@ -132,8 +136,8 @@ ko2js.classes.RenderSVG = class extends ko2js.classes.Render {
         obj.setAttributeNS(null, "x", x);
         obj.setAttributeNS(null, "y", y);
         obj.innerHTML = str;
-        obj.setAttributeNS(null, "stroke", this.get_value(spec, "stroke", "black"));
-        obj.setAttributeNS(null, "fill", this.get_value(spec, "fill", "none"));
+        obj.setAttributeNS(null, "stroke", this.get_value(spec, "stroke", "none"));
+        obj.setAttributeNS(null, "fill", this.get_value(spec, "fill", "black"));
         obj.setAttributeNS(null, "font-family", this.get_value(spec, "font.family", "Consolas"));
         obj.setAttributeNS(null, "font-size", this.get_value(spec, "font.size", "0.8em"));
         this._svg.appendChild(obj);
@@ -325,13 +329,14 @@ ko2js.diagram = {
                 // sequence line
                 let sy = this._config.boxH + this._config.padding * 3;
                 for(let i=0; i<this._seqs.length; i++) {
-                    let x1 = px + uw * this._seqs[i].srcid + hW;
-                    let x2 = px + uw * this._seqs[i].desid + hW;
+                    let seq = this._seqs[i];
+                    let x1 = px + uw * seq.srcid + hW;
+                    let x2 = px + uw * seq.desid + hW;
                     console.log(x1 + " - " + x2);
                     switch(this._seqs[i].atype) {
                         case 1:
                             this._canvas.draw_line(x1, sy, x2, sy, {stroke: "black", markerEnd: "#arrow1"});
-                            break;
+                             break;
                         
                         case 2:
                             this._canvas.draw_line(x1, sy, x2, sy, {stroke: "black", markerEnd: "#arrow2"});
@@ -341,7 +346,12 @@ ko2js.diagram = {
                             this._canvas.draw_line(x1, sy, x2, sy, {stroke: "black", markerEnd: "#arrow2", dash: "4"});
                             break;
                     }
-                    
+
+                    if (seq.message != null) {
+                        let xmax = Math.max(x1, x2);
+                        this._canvas.draw_string(seq.message, xmax + 5, sy);
+                    }
+
                     sy += this._config.boxH;
                 }
             }
@@ -384,7 +394,9 @@ ko2js.diagram = {
         }
     },
     sequence: {
-        create_line: function(items) {
+        create_line: function(raw_line) {
+            let line = raw_line.trim();
+            let items = line.split(" ");
             if (items.length == 0) {
                 return;
             }
@@ -404,14 +416,29 @@ ko2js.diagram = {
                 default:
                     return null;
             }
-            let line = new ko2js.diagram.classes.SequenceLine(
+            let seqline = new ko2js.diagram.classes.SequenceLine(
                 items[param.src], items[param.des], param.atype
             );
-            return line;
+            
+            if (items.length > 3) {
+                if (items[3] == ':') {
+                    let pos1 = line.indexOf(':') + 1;
+                    let pos2 = line.indexOf("[");
+                    let message = null;
+                    if (pos2 == (-1)) {
+                        message = line.substring(pos1);
+                    } else {
+                        message = line.substring(pos1, pos2 - 1);
+                    }
+                    seqline.message = message;
+                }
+            }
+
+            return seqline;
         },
         config: {
         },
-        view: function() {
+        viewByClassName: function() {
             let elist = document.getElementsByClassName("sequence");
             let n = elist.length;
             for(let i=0; i<n; i++) {
@@ -419,8 +446,7 @@ ko2js.diagram = {
                 let lines = script.innerText.split("\n");
                 let diagram = new ko2js.diagram.classes.Sequence("svg");
                 for(let j=0; j<lines.length; j++) {
-                    let items = lines[j].trim().split(" ");
-                    let seqline = ko2js.diagram.sequence.create_line(items);
+                    let seqline = ko2js.diagram.sequence.create_line(lines[j]);
                     if (seqline != null) {
                         diagram.add(seqline);
                     }
@@ -430,6 +456,28 @@ ko2js.diagram = {
                 let tag = diagram.tag();
                 document.body.insertBefore(tag, script);
             }
+        },
+        view: function(frame, seqlist) {
+            console.log("view");
+            let diagram = new ko2js.diagram.classes.Sequence("svg");
+            for(let i=0; i<seqlist.length; i++) {
+                let seq = seqlist[i];
+                switch(seq.atype) {
+                    case "->>": atype = 1; break;
+                    case "-->": atype = 2; break;
+                    case "..>": atype = 3; break;
+                }
+                let seqline = new ko2js.diagram.classes.SequenceLine(
+                    seq.src, seq.des, atype
+                );
+                if (typeof(seq.message) != "undefined") {
+                    seqline.message = seq.message;
+                }
+                diagram.add(seqline);
+            }
+            diagram.draw();
+            let tag = diagram.tag();
+            document.getElementById(frame).appendChild(tag);
         }
     },
 };
@@ -437,6 +485,7 @@ ko2js.diagram = {
 // page
 ko2js.page = {
     reformat: function() {
+        // toc
         let toc = document.getElementById("toc");
         if (toc != null) {
             ko2js.toc.view(toc);
@@ -446,6 +495,6 @@ ko2js.page = {
         ko2js.code.view();
 
         // diagram
-        ko2js.diagram.sequence.view();
+        ko2js.diagram.sequence.viewByClassName();
     }
 };
