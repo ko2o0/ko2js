@@ -27,7 +27,7 @@ ko2js.classes.RenderSVG = class extends ko2js.classes.Render {
         super();
 
         this._svg = this.create_element("svg");
-        this._svg.style.background = "skyblue";
+        //this._svg.style.background = "skyblue";
 
         let marker = this.create_element("marker");
         marker.id = "arrow1";
@@ -332,7 +332,7 @@ ko2js.diagram = {
                     let seq = this._seqs[i];
                     let x1 = px + uw * seq.srcid + hW;
                     let x2 = px + uw * seq.desid + hW;
-                    console.log(x1 + " - " + x2);
+                    //console.log(x1 + " - " + x2);
                     switch(this._seqs[i].atype) {
                         case 1:
                             this._canvas.draw_line(x1, sy, x2, sy, {stroke: "black", markerEnd: "#arrow1"});
@@ -357,7 +357,7 @@ ko2js.diagram = {
             }
 
             tag() {
-                console.log(this._canvas.tag());
+                //console.log(this._canvas.tag());
                 return this._canvas.tag();
             }
         },
@@ -394,6 +394,13 @@ ko2js.diagram = {
         }
     },
     sequence: {
+        atype_id: function(arrow_str) {
+            switch(arrow_str) {
+                case "->>": case "<<-": return 1;
+                case "-->": case "<--": return 2;
+                case "..>": case "<..": return 3;
+            }
+        },
         create_line: function(raw_line) {
             let line = raw_line.trim();
             let items = line.split(" ");
@@ -417,7 +424,7 @@ ko2js.diagram = {
                     return null;
             }
             let seqline = new ko2js.diagram.classes.SequenceLine(
-                items[param.src], items[param.des], param.atype
+                items[param.src], items[param.des], ko2js.diagram.sequence.atype_id(items[1])
             );
             
             if (items.length > 3) {
@@ -458,17 +465,12 @@ ko2js.diagram = {
             }
         },
         view: function(frame, seqlist) {
-            console.log("view");
+            //console.log("view");
             let diagram = new ko2js.diagram.classes.Sequence("svg");
             for(let i=0; i<seqlist.length; i++) {
                 let seq = seqlist[i];
-                switch(seq.atype) {
-                    case "->>": atype = 1; break;
-                    case "-->": atype = 2; break;
-                    case "..>": atype = 3; break;
-                }
                 let seqline = new ko2js.diagram.classes.SequenceLine(
-                    seq.src, seq.des, atype
+                    seq.src, seq.des, ko2js.diagram.sequence.atype_id(seq.atype)
                 );
                 if (typeof(seq.message) != "undefined") {
                     seqline.message = seq.message;
