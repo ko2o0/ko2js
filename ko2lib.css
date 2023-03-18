@@ -1,0 +1,35 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "Consolas";
+    font-size: 12pt;
+}
+
+/* toc */
+#toc {
+    margin: 0.5em 0em 0.5em 1.5em;
+}
+#toc::before {
+    content: "Index";
+}
+.i1 { padding-left: 0.5em; }
+.i2 { padding-left: 1.5em; }
+.i3 { padding-left: 2.5em; }
+.i4 { padding-left: 3.5em; }
+.i5 { padding-left: 4.5em; }
+.i6 { padding-left: 5.5em; }
+
+/*  */
+.codeview {
+    background-color: blanchedalmond;
+    border: solid 2px gray;
+    padding-left: 1.5em;
+}
+
+.keyword01 {
+    font-weight: bold;
+    color: cornflowerblue;
+}

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <meta charset="utf-8">
+    <head>
+        <!--
+        <link href="./ko2lib.css" rel="stylesheet">
+        <script src="./ko2lib.js"></script>
+        -->
+        <link href="https://gitlab.com/cat.zorba/ko2js/ko2lib.css" rel="stylesheet">
+        <script src="https://gitlab.com/cat.zorba/ko2js/ko2lib.css/ko2lib.js"></script>
+        <script>
+            window.onload = function() {
+                ko2js.page.reformat();
+            }
+        </script>
+    </head>
+    <body>
+        <h1 class="toc_ignore">Ko2js</h1>
+        <div id="toc"></div>
+
+        <!-- -->
+        <h1>Code</h1>
+        <script type="text/plane" class="codeview">
+            #include <stdio.h>
+
+            int main(int argc, char** argv) {
+                printf("Hello, World.\n");
+                return 0;
+            }
+        </script>
+
+        <!-- -->
+        <h1>Sequence</h1>
+        <script type="text/plane" class="sequence">
+            A ->> B : a0001
+            B --> C : b0001
+            B <.. C : c0001
+            A ->> D : a0002
+        </script>
+
+    </body>
+</html>
