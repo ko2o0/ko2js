@@ -5,6 +5,7 @@ ko2js = {};
 // classes
 ko2js.classes = { };
 
+// render base
 ko2js.classes.Render = class {
     constructor() { }
     tag() { }
@@ -16,12 +17,14 @@ ko2js.classes.Render = class {
     draw_string(str, x, y, spec) { }
 };
 
+// canvas
 ko2js.classes.RenderCanvas = class extends ko2js.classes.Render {
     constructor() {
         super();
     }
 };
 
+// svg
 ko2js.classes.RenderSVG = class extends ko2js.classes.Render {
     constructor() {
         super();
@@ -140,10 +143,22 @@ ko2js.classes.RenderSVG = class extends ko2js.classes.Render {
         obj.setAttributeNS(null, "fill", this.get_value(spec, "fill", "black"));
         obj.setAttributeNS(null, "font-family", this.get_value(spec, "font.family", "Consolas"));
         obj.setAttributeNS(null, "font-size", this.get_value(spec, "font.size", "0.8em"));
+        if ((typeof(spec) != "undefined") && (typeof(spec.anchor) != "undefined")) {
+            let halign = "middle";
+            //let valign = "middle";
+            switch(spec.anchor) {
+                case "e": halign = "end"; break;
+                case "w": halign = "start"; break;
+                case "m": halign = "middle"; break;
+            }
+            obj.setAttributeNS(null, "text-anchor", halign);
+            //obj.setAttributeNS(null, "dominant-baseline", valign);
+        }
         this._svg.appendChild(obj);
     }
 };
 
+// general canvas
 ko2js.classes.Canvas = class {
     constructor(type) {
         this._renderer = null;
@@ -214,7 +229,7 @@ ko2js.toc.view = function(toc) {
     toc.innerHTML = idx;
 };
 
-// ko2js.code
+// code
 ko2js.code = {
     view: function() {
         let elist = document.getElementsByClassName("codeview");
@@ -253,7 +268,139 @@ ko2js.code = {
     }
 };
 
-//
+// data
+ko2js.classes.Graph = class {
+    constructor(render) {
+        this._render = render;
+        this._background = "#aaa";
+        this._xpad = 10;
+        this._ypad = 10;
+
+        this.xrange(0, 1);
+        this.yrange(0, 1);
+    }
+
+    locate(x, y, w, h) {
+        this._x = x;
+        this._y = y;
+        this._w = w;
+        this._h = h;
+
+        this._x1 = x + this._xpad;
+        this._x2 = x + w - 1 - this._xpad;
+        this._y1 = y + this._ypad;
+        this._y2 = y + h - 1 - this._ypad;
+
+        this._gx1 = this._x1 + 100;
+        this._gy1 = this._y1 + 20;
+        this._gx2 = this._x2 - 20;
+        this._gy2 = this._y2 - 40;
+        this._gdx = this._gx2 - this._gx1;
+        this._gdy = this._gy2 - this._gy1;
+
+        this._render.resize(this._w, this._h);
+    }
+
+    autoscale(d) {
+        let digit = Math.floor(Math.log10(d));
+        let base = Math.floor(d / Math.pow(10, digit));
+        return {digit: digit, base: base}
+    }
+
+    xrange(min, max, autoscale) {
+        let xmin = min;
+        let xmax = max;
+        if ((typeof(autoscale) != "undefined") && (autoscale == 1)) {
+            let value = this.autoscale(min);
+            xmin = (value.base - 1) * Math.pow(10, value.digit);
+            value = this.autoscale(max);
+            xmax = (value.base + 1) * Math.pow(10, value.digit);
+        }
+        this._xmin = xmin;
+        this._xmax = xmax;
+        this._pdx = xmax - xmin;
+        this._xinc = this._pdx / 10.0;
+    }
+
+    yrange(min, max, autoscale) {
+        let ymin = min;
+        let ymax = max;
+        if ((typeof(autoscale) != "undefined") && (autoscale == 1)) {
+            let value = this.autoscale(min);
+            ymin = (value.base - 1) * Math.pow(10, value.digit);
+            value = this.autoscale(max);
+            ymax = (value.base + 1) * Math.pow(10, value.digit);
+        }
+        this._ymin = ymin;
+        this._ymax = ymax;
+        this._pdy = ymax - ymin;
+        this._yinc = this._pdy / 10.0;
+    }
+
+    px2gx(px) {
+        return this._gx1 + ((px - this._xmin) * this._gdx) / this._pdx;
+    }
+
+    py2gy(py) {
+        return this._gy2 - ((py - this._ymin) * this._gdy) / this._pdy;
+    }
+
+    clear_area() {
+        let x = this._x1;
+        let y = this._y1;
+        let w = this._x2 - this._x1 + 1;
+        let h = this._y2 - this._y1 + 1;
+        this._render.draw_rectangle(x, y, w, h, {fill: this._background, stroke: "none"});
+    }
+
+    round_value(d) {
+        if (d == 0) {
+            return 0;
+        }
+        let digit = Math.floor(Math.log10(d));
+        let base = Math.round(d / Math.pow(10, digit));
+        let round = base * Math.pow(10, digit);
+        round = Math.round(round * 100) / 100; 
+        console.log(base + ":" + round);
+        return round;
+    }
+
+    draw_axis_x() {
+        this._render.draw_line(this._gx1, this._gy2, this._gx2, this._gy2, {stroke: "black"});
+        let i = 0;
+        for(let x=this._xmin; x<this._xmax; x+=this._xinc) {
+            let gx = this.px2gx(x);
+            let gy = this._gy2;
+            this._render.draw_line(gx, gy, gx, gy+10, {stroke: "black"});
+            if (!(i & 0x1)) {
+                this._render.draw_string(this.round_value(x).toString(), gx, gy+20, {anchor: "m"});
+            }
+            i++;
+        }
+    }
+
+    draw_axis_y() {
+        this._render.draw_line(this._gx1, this._gy1, this._gx1, this._gy2, {stroke: "black"});
+        for(let y=this._ymin; y<this._ymax; y+=this._yinc) {
+            let gx = this._gx1;
+            let gy = this.py2gy(y);
+            this._render.draw_line(gx-10, gy, gx, gy, {stroke: "black"});
+        }
+    }
+
+    draw_axis() {
+        this.draw_axis_x();
+        this.draw_axis_y();
+    }
+
+    draw() {
+        this.clear_area();
+        this.draw_axis();
+    }
+
+};
+
+// diagram
 ko2js.diagram = {
     classes : {
         Sequence : class {
@@ -391,7 +538,27 @@ ko2js.diagram = {
             set time(value) { this._time = value; }
             set seqid(value) { this._seqid = value; }
             set seqno(value) { this._seqno = value; }
-        }
+        },
+        ScatterPlot: class extends ko2js.classes.Graph {
+            constructor(canvas) {
+                super(canvas);
+                this._data = null;
+            }
+
+            add(data) {
+                this._data = data;
+            }
+
+            draw() {
+                console.log("draw");
+                super.draw();
+            }
+        },
+        Histogram: class extends ko2js.classes.Graph {
+            constructor(canvas) {
+                super(canvas);
+            }
+        },
     },
     sequence: {
         atype_id: function(arrow_str) {
@@ -482,10 +649,85 @@ ko2js.diagram = {
             document.getElementById(frame).appendChild(tag);
         }
     },
+    graph: {
+        create: function(ename, spec) {
+            let screen = document.getElementById(ename); // tagName
+            let canvas = null;
+            switch(spec.render) {
+                case "svg":
+                    canvas = new ko2js.classes.Canvas("svg");
+                    break;
+            }
+            let graph = new ko2js.diagram.classes.ScatterPlot(canvas);
+            graph.locate(0, 0, screen.clientWidth, screen.clientHeight);
+            screen.appendChild(canvas.tag());
+            return graph;
+        }
+    }
+};
+
+//
+ko2js.wsys = {
+    classes: {
+        Win: class {
+            constructor(wm) {
+                this._wm = wm;
+                this._x = 0;
+                this._y = 0;
+                this._w = 0;
+                this._h = 0;
+                this._name = "";
+            }
+            set x(value) { this._x = value; }
+            set y(value) { this._y = value; }
+            set w(value) { this._w = value; }
+            set h(value) { this._h = value; }
+            get x() { return this._x; }
+            get y() { return this._y; }
+            get w() { return this._w; }
+            get h() { return this._h; }
+            set name(value) { this._name = value }
+            get name() { return this._name; }
+            hit(x, y) {
+                if ((x >= this._x) && (x < (this._x + this._w)) && (y >= this._y) && (y < (this._y + this._h))) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        },
+        Layout: class {
+
+        },
+        WinMgr : class {
+            constructor(ename) {
+                this._screen = document.getElementById(ename);
+                switch(this._screen.tagName) {
+                    case "SVG":
+                        break;
+
+                    case "CANVAS":
+                        break;
+
+                    case "DIV":
+                        break;
+                }
+            }
+        }
+    },
+    winmgr : {
+        create: function(ename) {
+
+        }
+    }
 };
 
 // page
 ko2js.page = {
+    onload: [],
+    add_onload : function(f) {
+        ko2js.page.onload.push(f);
+    },
     reformat: function() {
         // toc
         let toc = document.getElementById("toc");
@@ -498,5 +740,10 @@ ko2js.page = {
 
         // diagram
         ko2js.diagram.sequence.viewByClassName();
+
+        //
+        for(let i=0; i<ko2js.page.onload.length; i++) {
+            ko2js.page.onload[i]();
+        }
     }
 };

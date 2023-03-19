@@ -81,5 +81,35 @@
             ]);
         </script>
 
+        <!-- -->
+        <h2>Graph</h2>
+        <div id="graph1" style="width: 400px; height: 300px; background: #abc;"></div>
+        <script type="text/javascript">
+            let g1 = ko2js.diagram.graph.create("graph1", {type: "scatter", render: "svg"});
+            g1.add([[1,2], [2,4], [3,1], [4,7], [5,6]]);
+            g1.draw();
+        </script>
+
+        <!-- -->
+        <h1>Win1 (div)</h1>
+        <div id="wm1" style="width: 400px; height: 300px; background: #666;"></div>
+        <script type="text/javascript">
+            ko2js.wsys.winmgr.create("wm1");
+        </script>
+
+        <!-- -->
+        <h1>Win2 (svg)</h1>
+        <svg id="wm2" width="400" height="300" style="background: #666;"></svg>
+        <script type="text/javascript">
+            ko2js.wsys.winmgr.create("wm2");
+        </script>
+
+        <!-- -->
+        <h1>Win3 (canvas)</h1>
+        <canvas id="wm3" width="400" height="300" style="background: #666;"></canvas>
+        <script type="text/javascript">
+            ko2js.wsys.winmgr.create("wm3");
+        </script>
+
     </body>
 </html>
