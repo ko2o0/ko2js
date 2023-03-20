@@ -15,6 +15,8 @@ ko2js.classes.Render = class {
     draw_rectangle(x, y, w, h, spec)  { }
     draw_circle(x, y, r, spec) { }
     draw_string(str, x, y, spec) { }
+    transform(p) { return {x: p.x, y: p.y}; }
+    animate(config) {}
 };
 
 // canvas
@@ -109,6 +111,7 @@ ko2js.classes.RenderSVG = class extends ko2js.classes.Render {
             obj.setAttributeNS(null, "stroke-dasharray", this.get_value(spec, "dash", "4"));
         }
         this._svg.appendChild(obj);
+        return obj;
     }
 
     draw_rectangle(x, y, w, h, spec) {
@@ -121,16 +124,20 @@ ko2js.classes.RenderSVG = class extends ko2js.classes.Render {
         obj.setAttributeNS(null, "stroke", this.get_value(spec, "stroke", "black"));
         obj.setAttributeNS(null, "fill", this.get_value(spec, "fill", "none"));
         this._svg.appendChild(obj);
+        return obj;
     }
 
     draw_circle(x, y, r, spec) {
         let obj = this.create_element("ellipse");
         this._g.appendChild(obj);
-        obj.setAttributeNS(null, "x", x);
-        obj.setAttributeNS(null, "y", y);
-        obj.setAttributeNS(null, "width", r);
-        obj.setAttributeNS(null, "height", r);
+        obj.setAttributeNS(null, "cx", x);
+        obj.setAttributeNS(null, "cy", y);
+        obj.setAttributeNS(null, "rx", r);
+        obj.setAttributeNS(null, "rt", r);
+        obj.setAttributeNS(null, "stroke", this.get_value(spec, "stroke", "black"));
+        obj.setAttributeNS(null, "fill", this.get_value(spec, "fill", "none"));
         this._svg.appendChild(obj);
+        return obj;
     }
 
     draw_string(str, x, y, spec) {
@@ -155,6 +162,36 @@ ko2js.classes.RenderSVG = class extends ko2js.classes.Render {
             //obj.setAttributeNS(null, "dominant-baseline", valign);
         }
         this._svg.appendChild(obj);
+        return obj;
+    }
+
+    transform(org) {
+        let svg = this._svg;
+        let svg_point = svg.createSVGPoint();
+        svg_point.x = org.x;
+        svg_point.y = org.y;
+        let transformed = svg_point.matrixTransform(svg.getScreenCTM().inverse());
+        return transformed;
+
+        /*
+        let svg = this._canvas.tag();
+        let svgP;
+        let pt = svg.createSVGPoint();
+        pt.x = e.clientX;
+        pt.y = e.clientY;
+        svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+        console.log(this._cx+","+this._cy+"=>"+svgP.x+","+svgP.y);
+        */
+    }
+
+    animate(config) {
+        let anime = document.createElementNS("http://www.w3.org/2000/svg", "animate");
+        anime.setAttributeNS(null, "attributeName", config.name);
+        anime.setAttributeNS(null, "to", config.to);
+        anime.setAttributeNS(null, "dur", config.duration);
+        anime.setAttributeNS(null, "begin", "0s");
+        anime.setAttributeNS(null, "fill", "freeze");
+        return anime;
     }
 };
 
@@ -175,19 +212,19 @@ ko2js.classes.Canvas = class {
     }
 
     draw_line(x1, y1, x2, y2, spec) {
-        this._renderer.draw_line(x1, y1, x2, y2, spec);
+        return this._renderer.draw_line(x1, y1, x2, y2, spec);
     }
 
     draw_rectangle(x1, y1, x2, y2, spec) {
-        this._renderer.draw_rectangle(x1, y1, x2, y2, spec);
+        return this._renderer.draw_rectangle(x1, y1, x2, y2, spec);
     }
 
     draw_circle(x, y, r, spec) {
-        this._renderer.draw_circle(x, y, r, spec);
+        return this._renderer.draw_circle(x, y, r, spec);
     }
 
     draw_string(str, x, y, spec) {
-        this._renderer.draw_string(str, x, y, spec);
+        return this._renderer.draw_string(str, x, y, spec);
     }
 
     tag() {
@@ -200,6 +237,14 @@ ko2js.classes.Canvas = class {
 
     viewport(x, y, w, h) {
         this._renderer.viewport(x, y, w, h);
+    }
+
+    transform(p) {
+        return this._renderer.transform(p);
+    }
+
+    animate(config) {
+        return this._renderer.animate(config);
     }
 };
 
@@ -361,7 +406,6 @@ ko2js.classes.Graph = class {
         let base = Math.round(d / Math.pow(10, digit));
         let round = base * Math.pow(10, digit);
         round = Math.round(round * 100) / 100; 
-        console.log(base + ":" + round);
         return round;
     }
 
@@ -381,10 +425,15 @@ ko2js.classes.Graph = class {
 
     draw_axis_y() {
         this._render.draw_line(this._gx1, this._gy1, this._gx1, this._gy2, {stroke: "black"});
+        let i = 0;
         for(let y=this._ymin; y<this._ymax; y+=this._yinc) {
             let gx = this._gx1;
             let gy = this.py2gy(y);
             this._render.draw_line(gx-10, gy, gx, gy, {stroke: "black"});
+            if (!(i & 0x1)) {
+                this._render.draw_string(this.round_value(y).toString(), gx-20, gy, {anchor: "e"});
+            }
+            i++;
         }
     }
 
@@ -551,7 +600,28 @@ ko2js.diagram = {
 
             draw() {
                 console.log("draw");
+
+                if (this._data == null) {
+                    super.draw(); // draw only axis.
+                    return;
+                }
+
+                let xlist = [];
+                let ylist = [];
+                for(let i=0; i<this._data.length; i++) {
+                    xlist.push(this._data[i][0]);
+                    ylist.push(this._data[i][1]);
+                }
+                this.xrange(Math.min(...xlist), Math.max(...xlist), true);
+                this.yrange(Math.min(...ylist), Math.max(...ylist), true);
+
                 super.draw();
+
+                for(let i=0; i<this._data.length; i++) {
+                    let gx = this.px2gx(xlist[i]);
+                    let gy = this.py2gy(ylist[i]);
+                    this._render.draw_circle(gx, gy, 4, {fill: "orange"});
+                }
             }
         },
         Histogram: class extends ko2js.classes.Graph {
@@ -718,6 +788,113 @@ ko2js.wsys = {
     winmgr : {
         create: function(ename) {
 
+        }
+    }
+};
+
+// gui
+ko2js.gui = {
+    classes: {
+        Joystick: class {
+            constructor(canvas, param) {
+                this._canvas = canvas;
+                this._cx = param.cx;
+                this._cy = param.cy;
+                this._r = param.r;
+                this._background = param.background;
+                this._x = 0;
+                this._y = 0;
+
+                this._animations = [];
+
+                this.draw();
+
+                console.log(canvas);
+
+                let tag = this._canvas.tag();
+                //tag.style.background = "#eee";
+                tag.addEventListener("mousedown", (function(obj) {
+                    return function(e) {
+                        obj.mousedown(e);
+                    };
+                })(this));
+                tag.addEventListener("mousemove", (function(obj) {
+                    return function(e) {
+                        obj.mousemove(e);
+                    };
+                })(this));
+                tag.addEventListener("mouseup", (function(obj) {
+                    return function(e) {
+                        obj.mouseup(e);
+                    };
+                })(this));
+
+                this._dragging = false;
+            }
+
+            mousedown(e) {
+                let mpoint = this._canvas.transform({x: e.clientX, y: e.clientY});
+                this._dragging = true;
+                this._px = mpoint.x;
+                this._py = mpoint.y;
+            }
+
+            mousemove(e) {
+                if (this._dragging == false) {
+                    return;
+                }
+                let mpoint = this._canvas.transform({x: e.clientX, y: e.clientY});
+                let x = this._x + mpoint.x - this._px;
+                let y = this._y + mpoint.y - this._py;
+                let d = Math.sqrt((x * x) + (y * y));
+                if (d <= (this._r - 2)) {
+                    this._x = x;
+                    this._y = y;
+                    this.draw();
+                }
+                this._px = mpoint.x;
+                this._py = mpoint.y;
+            }
+
+            mouseup(e) {
+                this._dragging = false;
+                this._animations = [];
+                this._animations.push(this._canvas.animate({name: "cx", to: this._cx, duration: "0.5s"}));
+                this._animations.push(this._canvas.animate({name: "cy", to: this._cy, duration: "0.5s"}));
+                 this.draw();
+            }
+
+            draw() {
+                this._canvas.tag().innerHTML = "";
+                this._canvas.draw_circle(this._cx, this._cy, this._r, { fill: this._background });
+
+                let x = this._x + this._cx;
+                let y = this._y + this._cy;
+                let obj = this._canvas.draw_circle(x, y, 5, { fill: "pink" });
+                if (this._animations.length > 0) {
+                    for(let i=0; i<this._animations.length; i++) {
+                        obj.appendChild(this._animations[i]);
+                        this._animations[i].beginElement();
+                        console.log(this._animations[i]);
+                    }
+                    console.log(this._animations.length + " animated.");
+                }
+            }
+        }
+    },
+    joystick: {
+        create: function(ename, param) {
+            let canvas = null;
+            switch(param.render) {
+                case "svg":
+                    canvas = new ko2js.classes.Canvas("svg");
+                    break;
+            }
+            let etag = document.getElementById(ename);
+            canvas.resize(etag.clientWidth, etag.clientHeight);
+            canvas.viewport(0, 0, etag.clientWidth, etag.clientHeight);
+            let gui = new ko2js.gui.classes.Joystick(canvas, param);
+            etag.appendChild(canvas.tag());
         }
     }
 };

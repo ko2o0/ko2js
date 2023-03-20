@@ -83,11 +83,34 @@
 
         <!-- -->
         <h2>Graph</h2>
+        <h2>input</h2>
+        <pre>
+            &lt;script type="text/javascript"&gt;
+            let g1 = ko2js.diagram.graph.create("graph1", {type: "scatter", render: "svg"});
+            g1.add([[1,2], [2,4], [3,1], [4,7], [5,6]]);
+            g1.draw();
+            &lt;/script&gt;
+        </pre>
+        <h2>output</h2>
         <div id="graph1" style="width: 400px; height: 300px; background: #abc;"></div>
         <script type="text/javascript">
             let g1 = ko2js.diagram.graph.create("graph1", {type: "scatter", render: "svg"});
             g1.add([[1,2], [2,4], [3,1], [4,7], [5,6]]);
             g1.draw();
+        </script>
+
+        <!-- -->
+        <h2>GUI</h2>
+        <h2>input</h2>
+        <pre>
+            &lt;script type="text/javascript"&gt;
+                let u1 = ko2js.gui.joystick.create("gui1", {render: "svg", cx: 60, cy:60, r:50, background: "paleturquoise"});
+            &lt;/script&gt;
+        </pre>
+        <h2>output</h2>
+        <div id="gui1" style="width: 400px; height: 300px; background: #abc;"></div>
+        <script type="text/javascript">
+            let u1 = ko2js.gui.joystick.create("gui1", {render: "svg", cx: 60, cy:60, r:50, background: "paleturquoise"});
         </script>
 
         <!-- -->
