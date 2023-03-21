@@ -802,9 +802,11 @@ ko2js.gui = {
                 this._cy = param.cy;
                 this._r = param.r;
                 this._background = param.background;
+                this._border = param.border;
                 this._x = 0;
                 this._y = 0;
 
+                this._binding = null;
                 this._animations = [];
 
                 this.draw();
@@ -872,9 +874,13 @@ ko2js.gui = {
                  this.draw();
             }
 
+            binding(param) {
+                this._binding = param;
+            }
+
             draw() {
                 this._canvas.tag().innerHTML = "";
-                this._canvas.draw_circle(this._cx, this._cy, this._r, { fill: this._background });
+                this._canvas.draw_circle(this._cx, this._cy, this._r, { fill: this._background, stroke: this._border });
 
                 let x = this._x + this._cx;
                 let y = this._y + this._cy;
@@ -883,12 +889,20 @@ ko2js.gui = {
                     for(let i=0; i<this._animations.length; i++) {
                         obj.appendChild(this._animations[i]);
                         this._animations[i].beginElement();
-                        console.log(this._animations[i]);
+                        //console.log(this._animations[i]);
                     }
-                    console.log(this._animations.length + " animated.");
+                    //console.log(this._animations.length + " animated.");
                     this._animations = [];
                     this._x = 0;
                     this._y = 0;
+                }
+
+                if (this._binding != null) {
+                    switch(this._binding.type) {
+                        case "text":
+                            document.getElementById(this._binding.id).innerText = "(" + this._x + "," + this._y + ")";
+                            break;
+                    }
                 }
             }
         }
@@ -906,7 +920,29 @@ ko2js.gui = {
             canvas.viewport(0, 0, etag.clientWidth, etag.clientHeight);
             let gui = new ko2js.gui.classes.Joystick(canvas, param);
             etag.appendChild(canvas.tag());
+
+            if (typeof(param.binding) != "undefined") {
+                gui.binding(param.binding);
+            }
         }
+    }
+};
+
+//
+ko2js.picture = {
+    classes : {
+
+    },
+    create: function(ename, param) {
+        let canvas = null;
+        switch(param.render) {
+            case "svg":
+                canvas = new ko2js.classes.Canvas("svg");
+                break;
+        }
+        let etag = document.getElementById(ename);
+        canvas.resize(etag.clientWidth, etag.clientHeight);
+        canvas.viewport(0, 0, etag.clientWidth, etag.clientHeight);
     }
 };
 

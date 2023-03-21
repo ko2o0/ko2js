@@ -49,7 +49,7 @@
             A <.. D : a0002
         </pre>
         <h2>output</h2>
-        <script type="text/plane" class="sequence">
+        <script type="text/plain" class="sequence">
             A ->> B : a0001
             B --> C : b0001
             B <.. C : c0001
@@ -82,7 +82,7 @@
         </script>
 
         <!-- -->
-        <h2>Graph</h2>
+        <h1>Graph</h1>
         <h2>input</h2>
         <pre>
             &lt;script type="text/javascript"&gt;
@@ -100,17 +100,37 @@
         </script>
 
         <!-- -->
-        <h2>GUI</h2>
+        <h1>GUI</h1>
         <h2>input</h2>
         <pre>
+            &lt;div id="gui1_output"&gt;&lt;/div&gt;
             &lt;script type="text/javascript"&gt;
-                let u1 = ko2js.gui.joystick.create("gui1", {render: "svg", cx: 60, cy:60, r:50, background: "paleturquoise"});
+                let u1 = ko2js.gui.joystick.create("gui1", {
+                    render: "svg", cx: 60, cy:60, r:50, background: "paleturquoise", border: "#6cbbbb",
+                    binding: { type: "text", id: "gui1_output" },
+                });
             &lt;/script&gt;
         </pre>
         <h2>output</h2>
+        <div id="gui1_output">output</div>
         <div id="gui1" style="width: 400px; height: 300px; background: #abc;"></div>
         <script type="text/javascript">
-            let u1 = ko2js.gui.joystick.create("gui1", {render: "svg", cx: 60, cy:60, r:50, background: "paleturquoise"});
+            let u1 = ko2js.gui.joystick.create("gui1", {
+                render: "svg", cx: 60, cy:60, r:50, background: "paleturquoise", border: "#6cbbbb",
+                binding: { type: "text", id: "gui1_output" },
+            });
+        </script>
+
+        <!-- -->
+        <h1>Ko2pict</h1>
+        <h2>input</h2>
+        <h2>output</h2>
+        <script type="text/plain" class="ko2pict">
+            .begin
+            .box A "A"
+            .box B "B"
+            A -> B
+            .end
         </script>
 
         <!-- -->
