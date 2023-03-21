@@ -834,6 +834,14 @@ ko2js.gui = {
 
             mousedown(e) {
                 let mpoint = this._canvas.transform({x: e.clientX, y: e.clientY});
+
+                let dx = mpoint.x - this._cx;
+                let dy = mpoint.y - this._cy;
+                let d = Math.sqrt((dx*dx) + (dy*dy));
+                if (d >= this._r) {
+                    return;
+                }
+
                 this._dragging = true;
                 this._px = mpoint.x;
                 this._py = mpoint.y;
@@ -859,8 +867,8 @@ ko2js.gui = {
             mouseup(e) {
                 this._dragging = false;
                 this._animations = [];
-                this._animations.push(this._canvas.animate({name: "cx", to: this._cx, duration: "0.5s"}));
-                this._animations.push(this._canvas.animate({name: "cy", to: this._cy, duration: "0.5s"}));
+                this._animations.push(this._canvas.animate({name: "cx", to: this._cx, duration: "0.3s"}));
+                this._animations.push(this._canvas.animate({name: "cy", to: this._cy, duration: "0.3s"}));
                  this.draw();
             }
 
@@ -878,6 +886,9 @@ ko2js.gui = {
                         console.log(this._animations[i]);
                     }
                     console.log(this._animations.length + " animated.");
+                    this._animations = [];
+                    this._x = 0;
+                    this._y = 0;
                 }
             }
         }
