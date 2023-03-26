@@ -62,7 +62,7 @@
         <pre>
             &lt;div id="seq2"&gt;&lt;/div&gt;
             &lt;script type="text/javascript"&gt;
-                ko2js.diagram.sequence.view("seq2", [
+                ko2js.uml.sequence.view("seq2", [
                     { src: "A", des: "B", atype: "->>", message: "a0001" },
                     { src: "B", des: "C", atype: "-->", message: "b0001" },
                     { src: "C", des: "B", atype: "..>", message: "c0001" },
@@ -73,7 +73,7 @@
         <h2>output</h2>
         <div id="seq2"></div>
         <script type="text/javascript">
-            ko2js.diagram.sequence.view("seq2", [
+            ko2js.uml.sequence.view("seq2", [
                 { src: "A", des: "B", atype: "->>", message: "a0001" },
                 { src: "B", des: "C", atype: "-->", message: "b0001" },
                 { src: "C", des: "B", atype: "..>", message: "c0001" },
@@ -82,11 +82,11 @@
         </script>
 
         <!-- -->
-        <h1>Graph</h1>
+        <h1>Graph (Scatter Plot)</h1>
         <h2>input</h2>
         <pre>
             &lt;script type="text/javascript"&gt;
-            let g1 = ko2js.diagram.graph.create("graph1", {type: "scatter", render: "svg"});
+            let g1 = ko2js.diagram.graph.scatter.create("graph1", {render: "svg"});
             g1.add([[1,2], [2,4], [3,1], [4,7], [5,6]]);
             g1.draw();
             &lt;/script&gt;
@@ -94,9 +94,24 @@
         <h2>output</h2>
         <div id="graph1" style="width: 400px; height: 300px; background: #abc;"></div>
         <script type="text/javascript">
-            let g1 = ko2js.diagram.graph.create("graph1", {type: "scatter", render: "svg"});
+            let g1 = ko2js.plotter.scatter.create("graph1", {render: "svg"});
             g1.add([[1,2], [2,4], [3,1], [4,7], [5,6]]);
             g1.draw();
+        </script>
+
+        <!-- -->
+        <h1>Graph (Vertex, Edge)</h1>
+        <h2>input</h2>
+        <pre>
+        </pre>
+        <h2>output</h2>
+        <div id="graph1" style="width: 400px; height: 300px; background: #abc;"></div>
+        <script type="text/plain" class="graph">
+            A -> B [label="a->b"];
+            A -> C [label="a->c"];
+            B -> D [label="b->d"];
+            C -> D [label="c->d"];
+            D -> E [label="d->e"];
         </script>
 
         <!-- -->
