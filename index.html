@@ -99,6 +99,34 @@
             g1.draw();
         </script>
 
+        <h1>Graph (Scrolled Connected Curve)</h1>
+        <h2>input</h2>
+        <h2>output</h2>
+        <button id="graph2_button">start</button>
+        <div id="graph2" style="width: 400px; height: 300px; background: #abc;"></div>
+        <script type="text/javascript">
+            var graph2 = { active: 0, button: null, g: null, timer: null };
+            graph2.button = document.getElementById("graph2_button");
+            graph2.button.addEventListener("click", function(e) {
+                if (graph2.active == 0) {
+                    graph2.active = 1;
+                    graph2.button.innerText = "stop";
+                    graph2.timer = setInterval(function() {
+                        graph2.g.add(Math.floor(Math.random() * 100));
+                    }, 1000);
+                } else {
+                    graph2.active = 0;
+                    graph2.button.innerText = "start";
+                    clearInterval(graph2.timer);
+                }
+            });
+            graph2.g = ko2js.plotter.scrolled_curve.create("graph2", {render: "svg"});
+            graph2.g.xrange(0, 180); // 180 sample
+            graph2.g.yrange(0, 100); // 100
+            
+        </script>
+
+
         <!-- -->
         <h1>Graph (Vertex, Edge)</h1>
         <h2>input</h2>

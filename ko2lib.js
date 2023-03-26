@@ -424,6 +424,13 @@ ko2js.tokenizer = {
 
 ////////////////////////////////////////////////////////////////////////////////
 // graph theory
+ko2js.graph.classes = { // base class
+    Layouter : class {
+        layout(g) {
+        }
+    }
+};
+
 ko2js.graph = {
     classes: {
         Graph: class {
@@ -468,6 +475,14 @@ ko2js.graph = {
                 let edge = new ko2js.graph.classes.Edge(src, dst);
                 this._edges.push(edge);
                 return edge;
+            }
+
+            layout(layouter) {
+                layouter.layout(this);
+            }
+
+            draw() {
+                
             }
         },
         Vertex: class {
@@ -519,6 +534,15 @@ ko2js.graph = {
                 return this._dst;
             }
         },
+        LayoutVertical: class extends ko2js.graph.classes.Layouter {
+            constructor() {
+                super();
+            }
+
+            layout(g) {
+
+            }
+        }
     },
     parse_relation: function(g, line) {
         if (line.length == 0) {
@@ -584,7 +608,11 @@ ko2js.graph = {
             }
         }
 
+        // topological sort
         let sorted = ko2js.graph.topological_sort(g);
+
+        // layout
+        g.layout(new ko2js.graph.classes.LayoutVertical());
     },
     topological_sort: function(g) {
         // create a table
@@ -677,8 +705,10 @@ ko2js.plotter.classes = { // base class definition
             this._xpad = 10;
             this._ypad = 10;
 
-            this.xrange(0, 1);
-            this.yrange(0, 1);
+            this._xmin = 0;
+            this._xmax = 1;
+            this._ymin = 0;
+            this._ymax = 1;
         }
 
         locate(x, y, w, h) {
@@ -848,6 +878,55 @@ ko2js.plotter = {
                 super(canvas);
             }
         },
+        ScrolledCurve: class extends ko2js.plotter.classes.AxisGraph {
+            constructor(canvas) {
+                super(canvas);
+                this._data = [];
+            }
+
+            add(data) {
+                this._data.push(data);
+                if (this._data.length >= this._xmax) {
+                    this._data.shift();
+                }
+                this.draw();
+            }
+
+            xrange(xmin, xmax, autoscale) {
+                super.xrange(xmin, xmax, 0);
+                for(let x=xmin; x<=xmax; x++) {
+                    this._data.push(null);
+                }
+            }
+
+            draw() {
+                if (this._data == null) {
+                    super.draw(); // draw only axis.
+                    return;
+                }
+
+                super.draw();
+
+                let first = 0;
+                let lx = 0;
+                let ly = 0;
+                for(let i=0; i<this._data.length; i++) {
+                    if (this._data[i] == null) {
+                        continue;
+                    }
+                    let gx = this.px2gx(i);
+                    let gy = this.py2gy(this._data[i]);
+                    if (first == 0) {
+                        first = 1;
+                        lx = gx;
+                        ly = gy;
+                    }
+                    this._render.draw_line(lx, ly, gx, gy, {stroke: "orange"});
+                    lx = gx;
+                    ly = gy;
+                }
+            }
+        },
     },
     scatter : {
         create: function(ename, spec) {
@@ -859,6 +938,21 @@ ko2js.plotter = {
                     break;
             }
             let graph = new ko2js.plotter.classes.ScatterPlot(canvas);
+            graph.locate(0, 0, screen.clientWidth, screen.clientHeight);
+            screen.appendChild(canvas.tag());
+            return graph;
+        }
+    },
+    scrolled_curve: {
+        create: function(ename, spec) {
+            let screen = document.getElementById(ename); // tagName
+            let canvas = null;
+            switch(spec.render) {
+                case "svg":
+                    canvas = new ko2js.canvas.classes.Canvas("svg");
+                    break;
+            }
+            let graph = new ko2js.plotter.classes.ScrolledCurve(canvas);
             graph.locate(0, 0, screen.clientWidth, screen.clientHeight);
             screen.appendChild(canvas.tag());
             return graph;
