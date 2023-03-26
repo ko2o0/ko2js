@@ -15,6 +15,51 @@ ko2js = {};
 ko2js.classes = {};
 
 ////////////////////////////////////////////////////////////////////////////////
+// table
+ko2js.classes.data = {
+    Dim2 : class {
+        constructor(xdim, ydim) {
+            this._xdim = xdim;
+            this._ydim = ydim;
+            this._array = [];
+            for(let y=0; y<ydim; y++) {
+                let ary = [];
+                this._array.push(ary);
+                for(let x=0; x<xdim; x++) {
+                    ary.push([]);
+                }
+            }
+        }
+        
+        get xdim() {
+            return this._xdim;
+        }
+
+        get ydim() {
+            return this._ydim;
+        }
+
+        put(x, y, value) {
+            this._array[y][x] = value;
+        }
+
+        get(x, y) {
+            return this._array[y][x];
+        }
+
+        dump() {
+            for(let y=0; y<this._ydim; y++) {
+                let line =  y + " | ";
+                for(let x=0; x<this._xdim; x++) {
+                    line += this._array[y][x] + " ";
+                }
+                console.log(line);
+            }
+        }
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////
 // 特定領域クラス群
 ko2js.renderer = {};    // レンダー基本クラス
 ko2js.canvas = {};      // キャンバス
@@ -306,6 +351,14 @@ ko2js.tokenizer = {
                 }
             }
 
+            is_alpha(c) {
+                if (((c >= "A") && (c <= "Z")) || ((c >= "a") && (c <= "z")) || (c == "_")) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
             token() {
                 while(this.eot() == false) {
                     let c = this.getchar();
@@ -316,17 +369,21 @@ ko2js.tokenizer = {
                         }
                         c = this.getchar();
                     }
-                    let str = null;
+                    let str = "";
+                    //console.log("c="+c);
                     switch(c) {
                         case "-": case "<": case ">": case "[": case "]": 
                         case "=":
                             return {type: "op", text: c};
+                        case ";":
+                            return {type: "eol", text: c};
                         case "\n":
                             break;
                         case "\"":
                             str = "";
+                            c = this.getchar();
                             while(this.eot() == false) {
-                                if (c != "\"") {
+                                if (c == "\"") {
                                     break;
                                 }
                                 str += c;
@@ -337,26 +394,29 @@ ko2js.tokenizer = {
                         case "5": case "6": case "7": case "8": case "9":
                             str = "";
                             while(this.eot() == false) {
-                                if ((c < 0x30) && (c > 0x39) && (c != '.')) {
+                                if ((c < 0x30) || (c > 0x39) || (c != '.')) {
+                                    this.ungetchar();
                                     break;
                                 }
                                 str += c;
                                 c = this.getchar();
                             }
-                            return {type: "number", text: num};
+                            return {type: "number", text: str};
                         default:
                             str = "";
                             while(this.eot() == false) {
-                                if ((c < 0x30) && (c > 0x39) && (c != '.')) {
+                                if (! this.is_alpha(c)) {
+                                    this.ungetchar();
                                     break;
                                 }
-                                num += c;
+                                str += c;
                                 c = this.getchar();
                             }
-                            return {type: "keyword", text: num};
+                            return {type: "keyword", text: str};
                             break;
                     }
                 }
+                return null;
             }
         }
     }
@@ -372,12 +432,42 @@ ko2js.graph = {
                 this._edges = [];
             }
 
-            add_vertex(vertex) {
-                this._vertecies.push(vertex);
+            get vertecies() {
+                return this._vertecies;
             }
 
-            add_edge(edge) {
+            get edges() {
+                return this._edges;
+            }
+
+            find_vertex_index(text) {
+                for(let i=0; i<this._vertecies.length; i++) {
+                    if (text == this._vertecies[i].Text) {
+                        return i;
+                    }
+                }
+                return null;
+            }
+
+            get_vertex_at(i) {
+                return this._vertecies[i];
+            }
+
+            create_vertex(text) {
+                for(let i=0; i<this._vertecies.length; i++) {
+                    if (text == this._vertecies[i].Text) {
+                        return this._vertecies[i];
+                    }
+                }
+                let vertex = new ko2js.graph.classes.Vertex(text);
+                this._vertecies.push(vertex);
+                return vertex;
+            }
+
+            create_edge(src, dst) {
+                let edge = new ko2js.graph.classes.Edge(src, dst);
                 this._edges.push(edge);
+                return edge;
             }
         },
         Vertex: class {
@@ -394,13 +484,18 @@ ko2js.graph = {
                 }
             }
 
-            set backColor(value) {
-                this._backColor = value;
-            }
-
-            set foreColor(value) {
-                this._foreColor = value;
-            }
+            set X(value) { this._x = value; }
+            get X() { return this._x; }
+            set Y(value) { this._y = value; }
+            get Y() { return this._y; }
+            set W(value) { this._w = value; }
+            get W() { return this._w; }
+            set H(value) { this._h = value; }
+            get H() { return this._h; }
+            set Text(value) { this._text = value; }
+            get Text() { return this._text; }
+            set ForeColor(value) { this._foreColor = value; }
+            set BackColor(value) { this._backColor = value; }
         },
         Edge: class {
             constructor() {
@@ -411,13 +506,13 @@ ko2js.graph = {
                     this._dst = arguments[1];
                 }
             }
-            src() {
+            get src() {
                 if (arguments.length > 0) {
                     this._src = arguments[0];
                 }
                 return this._src;
             }
-            dst() {
+            get dst() {
                 if (arguments.length > 0) {
                     this._dst = arguments[0];
                 }
@@ -425,19 +520,150 @@ ko2js.graph = {
             }
         },
     },
+    parse_relation: function(g, line) {
+        if (line.length == 0) {
+            return;
+        }
+        //console.log(">" + line);
+        let tokenizer = new ko2js.tokenizer.classes.Tokenizer(line);
+        let safety = 20;
+
+        let token = null;
+        while(true) {
+            // source
+            token = tokenizer.token();
+            if (token == null) { break; }
+            let v1 = g.create_vertex(token.text);
+
+            // remove - and >
+            token = tokenizer.token();
+            token = tokenizer.token();
+            if (token == null) { break; }
+
+            // destination
+            token = tokenizer.token();
+            if (token == null) { break; }
+            let v2 = g.create_vertex(token.text);
+
+            // relation
+            let edge = g.create_edge(v1, v2);
+
+            // attributes
+            token = tokenizer.token();
+            if (token.type == "eol") {
+                break;
+            } else if (token.text == "[") {
+                while(true) {
+                    token = tokenizer.token();
+                    if (token.text == "]") {
+
+                    } else if (token.text == ";") {
+                        break;
+                    }
+                }
+            }
+
+            safety--;
+            if (safety <= 0) {
+                console.log("[WARNING] safety break");
+                break;
+            }
+        }
+    },
     reformat() {
+        let g = new ko2js.graph.classes.Graph();
         let elist = document.getElementsByClassName("graph");
         for(let i=0; i<elist.length; i++) {
             let text = elist[i].innerText;
             let lines = text.split("\n");
             for(let j=0; j<lines.length; j++) {
                 let items = lines[j].trim().split(" ");
-
+                if (items[1] == "->") {
+                    ko2js.graph.parse_relation(g, lines[j].trim());
+                }
             }
         }
+
+        let sorted = ko2js.graph.topological_sort(g);
     },
     topological_sort: function(g) {
+        // create a table
+        let n = g.vertecies.length;
+        let ary = new ko2js.classes.data.Dim2(n, n);
+        for(let y=0; y<n; y++) {
+            for(let x=0; x<n; x++) {
+                ary.put(x, y, 0);
+            }
+        }
+        // put a data to table
+        for(let i=0; i<g.edges.length; i++) {
+            let edge = g.edges[i];
+            let isrc = g.find_vertex_index(edge.src.Text);
+            let idst = g.find_vertex_index(edge.dst.Text);
+            //console.log(edge.src.Text + "(" + isrc + ")->" + edge.dst.Text + "(" + idst + ")");
+            ary.put(isrc, idst, 1);
+        }
+        //ary.dump();
 
+        //
+        let order = [];
+        let total = 0;
+        let safety = 10;
+        while(true) {
+            total = 0;
+            let count = 0;
+            let found = [];
+
+            //
+            for(let y=0; y<ary.ydim; y++) {
+                for(let x=0; x<ary.xdim; x++) {
+                    if (ary.get(x,y) != 0) { count++; }
+                }
+                total += count;
+                if (count == 0) {
+                    let has = false;
+                    for(let i=0; i<order.length;i++) {
+                        if (y == order[i]) {
+                            has = true;
+                            break;
+                        }
+                    }
+                    if (has == false) {
+                        found.push(y);
+                    }
+                }
+            }
+
+            //
+            for(let i=0; i<found.length; i++) {
+                for(let y=0; y<ary.ydim; y++) {
+                    ary.put(found[i], y, 0);
+                }
+                order.push(found[i]);
+                //order.push(g.get_vertex_at(found[i]));
+            }
+
+            //console.log("--");
+            //ary.dump();
+
+            // terminate
+            if (total == 0) {
+                break;
+            }
+
+            safety--;
+            if (safety < 0) {
+                console.log("[WARNING] safety block.");
+                break;
+            }
+        }
+        //console.log(order);
+
+        let result = [];
+        for(let i=0; i<order.length; i++) {
+            result.push(g.get_vertex_at(order[i]));
+        }
+        return result;
     }
 }
 
@@ -592,7 +818,7 @@ ko2js.plotter = {
             }
 
             draw() {
-                console.log("draw");
+                //console.log("draw");
 
                 if (this._data == null) {
                     super.draw(); // draw only axis.
@@ -935,6 +1161,7 @@ ko2js.wsys = {
     }
 };
 
+////////////////////////////////////////////////////////////////////////////////
 // gui
 ko2js.gui = {
     classes: {
@@ -1071,6 +1298,7 @@ ko2js.gui = {
     }
 };
 
+////////////////////////////////////////////////////////////////////////////////
 //
 ko2js.picture = {
     classes : {
@@ -1166,6 +1394,7 @@ ko2js.page = {
         ko2js.page.code();
         ko2js.uml.reformat();
         ko2js.plotter.reformat();
+        ko2js.graph.reformat();
 
         // onload
         for(let i=0; i<ko2js.page.onload.length; i++) {
