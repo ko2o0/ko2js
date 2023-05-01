@@ -86,27 +86,149 @@
         <h2>input</h2>
         <pre>
             &lt;script type="text/javascript"&gt;
-            let g1 = ko2js.diagram.graph.scatter.create("graph1", {render: "svg"});
-            g1.add([[1,2], [2,4], [3,1], [4,7], [5,6]]);
-            g1.draw();
+            let g1 = {};
+            let g = g1;
+            g.g = ko2js.diagram.graph.scatter.create("graph1", {render: "svg"});
+            g.g.add([[1,2], [2,4], [3,1], [4,7], [5,6]]);
+            g.g.draw();
             &lt;/script&gt;
         </pre>
         <h2>output</h2>
         <div id="graph1" style="width: 400px; height: 300px; background: #abc;"></div>
         <script type="text/javascript">
-            let g1 = ko2js.plotter.scatter.create("graph1", {render: "svg"});
-            g1.add([[1,2], [2,4], [3,1], [4,7], [5,6]]);
-            g1.draw();
+            let g1 = {};
+            let g = g1;
+            g.g = ko2js.plotter.scatter.create("graph1", {render: "svg"});
+            g.g.add([[1,2], [2,4], [3,1], [4,7], [5,6]]);
+            g.g.draw();
+        </script>
+
+        <h1>Statistics/F distribution</h1>
+        <h2>input</h2>
+        <pre>
+            &lt;div id="graph2" style="width: 400px; height: 300px; background: #abc;"&gt;&lt;/div&gt;
+            &lt;script type="text/javascript"&gt;
+                let g2 = {};
+                g = g2;
+                g.g = ko2js.plotter.scatter.create("graph2", {render: "svg"});
+                g.data = [];
+                g.m = 5;
+                g.n = 5;
+                g.g.xrange(0, 6);
+                let ymin = 0;
+                let ymax = 0;
+                for(let x=0; x&lt;5.0; x+=0.01) {
+                    let y = ko2js.statistics.distribution.f(x, g.m, g.n);
+                    if (x == 0) {
+                        ymin = y;
+                        ymax = y;
+                    } else {
+                        ymin = Math.min(ymin, y);
+                        ymax = Math.max(ymax, y);
+                    }
+                    g.data.push([x, y]);
+                }
+                g.g.yrange(ymin, ymax);
+                g.g.marker("size", 2);
+                g.g.add(g.data);
+                g.g.draw();
+            &lt;/script&gt;
+        </pre>
+        <h2>output</h2>
+        <div id="graph2" style="width: 400px; height: 300px; background: #abc;"></div>
+        <script type="text/javascript">
+            let g2 = {};
+            g = g2;
+            g.g = ko2js.plotter.scatter.create("graph2", {render: "svg"});
+            g.data = [];
+            g.m = 5;
+            g.n = 5;
+            g.g.xrange(0, 6);
+            ymin = 0;
+            ymax = 0;
+            for(let x=0; x<5.0; x+=0.01) {
+                let y = ko2js.statistics.distribution.f(x, g.m, g.n);
+                if (x == 0) {
+                    ymin = y;
+                    ymax = y;
+                } else {
+                    ymin = Math.min(ymin, y);
+                    ymax = Math.max(ymax, y);
+                }
+                g.data.push([x, y]);
+            }
+            g.g.yrange(ymin, ymax);
+            g.g.marker("size", 2);
+            g.g.add(g.data);
+            g.g.draw();
+        </script>
+
+        <h1>Statistics/T distribution</h1>
+        <h2>input</h2>
+        <pre>
+            &lt;div id="graph3" style="width: 400px; height: 300px; background: #abc;"&gt;&lt;/div&gt;
+            &lt;script type="text/javascript"&gt;
+                let g3 = {};
+                g = g3;
+                g.g = ko2js.plotter.scatter.create("graph3", {render: "svg"});
+                g.data = [];
+                g.m = 5;
+                g.g.xrange(0, 6);
+                ymin = 0;
+                ymax = 0;
+                for(let x=0; x&lt;5.0; x+=0.01) {
+                    let y = ko2js.statistics.distribution.t(x, g.m);
+                    if (x == 0) {
+                        ymin = y;
+                        ymax = y;
+                    } else {
+                        ymin = Math.min(ymin, y);
+                        ymax = Math.max(ymax, y);
+                    }
+                    g.data.push([x, y]);
+                }
+                g.g.yrange(ymin, ymax);
+                g.g.marker("size", 2);
+                g.g.add(g.data);
+                g.g.draw();
+            &lt;/script&gt;
+        </pre>
+        <h2>output</h2>
+        <div id="graph3" style="width: 400px; height: 300px; background: #abc;"></div>
+        <script type="text/javascript">
+            let g3 = {};
+            g = g3;
+            g.g = ko2js.plotter.scatter.create("graph3", {render: "svg"});
+            g.data = [];
+            g.m = 5;
+            g.g.xrange(0, 6);
+            ymin = 0;
+            ymax = 0;
+            for(let x=0; x<5.0; x+=0.01) {
+                let y = ko2js.statistics.distribution.t(x, g.m);
+                if (x == 0) {
+                    ymin = y;
+                    ymax = y;
+                } else {
+                    ymin = Math.min(ymin, y);
+                    ymax = Math.max(ymax, y);
+                }
+                g.data.push([x, y]);
+            }
+            g.g.yrange(ymin, ymax);
+            g.g.marker("size", 2);
+            g.g.add(g.data);
+            g.g.draw();
         </script>
 
         <h1>Graph (Scrolled Connected Curve)</h1>
         <h2>input</h2>
         <h2>output</h2>
-        <button id="graph2_button">start</button>
-        <div id="graph2" style="width: 400px; height: 300px; background: #abc;"></div>
+        <button id="graph4_button">start</button>
+        <div id="graph4" style="width: 400px; height: 300px; background: #abc;"></div>
         <script type="text/javascript">
             var graph2 = { active: 0, button: null, g: null, timer: null };
-            graph2.button = document.getElementById("graph2_button");
+            graph2.button = document.getElementById("graph4_button");
             graph2.button.addEventListener("click", function(e) {
                 if (graph2.active == 0) {
                     graph2.active = 1;
@@ -120,7 +242,7 @@
                     clearInterval(graph2.timer);
                 }
             });
-            graph2.g = ko2js.plotter.scrolled_curve.create("graph2", {render: "svg"});
+            graph2.g = ko2js.plotter.scrolled_curve.create("graph4", {render: "svg"});
             graph2.g.xrange(0, 180); // 180 sample
             graph2.g.yrange(0, 100); // 100
             
@@ -204,6 +326,10 @@
         <script type="text/javascript">
             ko2js.wsys.winmgr.create("wm3");
         </script>
+
+        <!-- -->
+        <h1>Statistics</h1>
+        <a href="./statistics.html">Statistics</a>
 
     </body>
 </html>

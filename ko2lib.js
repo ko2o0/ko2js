@@ -709,6 +709,11 @@ ko2js.plotter.classes = { // base class definition
             this._xmax = 1;
             this._ymin = 0;
             this._ymax = 1;
+
+            this._state = {
+                xrange: false,
+                yrange: false
+            };
         }
 
         locate(x, y, w, h) {
@@ -751,6 +756,7 @@ ko2js.plotter.classes = { // base class definition
             this._xmax = xmax;
             this._pdx = xmax - xmin;
             this._xinc = this._pdx / 10.0;
+            this._state.xrange = true; // set by user
         }
 
         yrange(min, max, autoscale) {
@@ -766,6 +772,7 @@ ko2js.plotter.classes = { // base class definition
             this._ymax = ymax;
             this._pdy = ymax - ymin;
             this._yinc = this._pdy / 10.0;
+            this._state.yrange = true; // set by user
         }
 
         px2gx(px) {
@@ -841,10 +848,19 @@ ko2js.plotter = {
             constructor(canvas) {
                 super(canvas);
                 this._data = null;
+
+                this._marker = {
+                    size: 4,
+                    color: "orange"
+                };
             }
 
             add(data) {
                 this._data = data;
+            }
+
+            marker(name, value) {
+                this._marker[name] = value;
             }
 
             draw() {
@@ -861,15 +877,19 @@ ko2js.plotter = {
                     xlist.push(this._data[i][0]);
                     ylist.push(this._data[i][1]);
                 }
-                this.xrange(Math.min(...xlist), Math.max(...xlist), true);
-                this.yrange(Math.min(...ylist), Math.max(...ylist), true);
-
+                if (this._state.xrange == false) {
+                    this.xrange(Math.min(...xlist), Math.max(...xlist), true);
+                }
+                if (this._state.yrange == false) {
+                    this.yrange(Math.min(...ylist), Math.max(...ylist), true);
+                }
+                
                 super.draw();
 
                 for(let i=0; i<this._data.length; i++) {
                     let gx = this.px2gx(xlist[i]);
                     let gy = this.py2gy(ylist[i]);
-                    this._render.draw_circle(gx, gy, 4, {fill: "orange"});
+                    this._render.draw_circle(gx, gy, this._marker.size, {fill: this._marker.color});
                 }
             }
         },
@@ -1408,6 +1428,46 @@ ko2js.picture = {
         let etag = document.getElementById(ename);
         canvas.resize(etag.clientWidth, etag.clientHeight);
         canvas.viewport(0, 0, etag.clientWidth, etag.clientHeight);
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////
+//
+ko2js.math = {
+    gamma : function(z) {
+        let g = 7;
+        let C = [0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+                 771.32342877765313, -176.61502916214059, 12.507343278686905,
+                 -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+
+        if (z < 0.5) return Math.PI / (Math.sin(Math.PI * z) * ko2js.math.gamma(1 - z));
+        else {
+            z -= 1;
+            var x = C[0];
+            for (var i = 1; i < g + 2; i++)
+                x += C[i] / (z + i);
+            var t = z + g + 0.5;
+            return Math.sqrt(2 * Math.PI) * Math.pow(t, (z + 0.5)) * Math.exp(-t) * x;
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+ko2js.statistics = {
+    distribution : {
+        t : function(x, df) {
+            // xはt値、dfは自由度
+            var numerator = ko2js.math.gamma((df + 1) / 2) * Math.pow((1 + (Math.pow(x, 2) / df)), -((df + 1) / 2));
+            var denominator = Math.sqrt(df * Math.PI) * ko2js.math.gamma(df / 2);
+            return numerator / denominator;
+        },
+        f : function(x, df1, df2) {
+            // xはF値、df1とdf2は自由度
+            var numerator = Math.pow(df1 * x, df1) * Math.pow(df2, df2);
+            var denominator = Math.pow((df1 * x) + df2, df1 + df2);
+            return numerator / denominator;
+        }
     }
 };
 
